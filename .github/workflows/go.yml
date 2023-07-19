@@ -20,9 +20,50 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.20'
+        cache-dependency-path: go.sum
 
     - name: Build
       run: go build -v ./...
 
     - name: Test
       run: go test -v ./...
+
+    - name: Staticcheck
+      # You may pin to the exact commit or the version.
+      # uses: dominikh/staticcheck-action@ba605356b4b29a60e87ab9404b712f3461e566dc
+      uses: dominikh/staticcheck-action@v1.3.0
+      with:
+        # The version of Staticcheck to use. Because new versions of Staticcheck introduce new checks that may break your build, it is recommended to pin to a specific version and to update Staticheck consciously.
+
+        # version: # default is latest
+        # Minimum version of Go to support. This affects the diagnostics reported by Staticcheck, avoiding suggestions that are not applicable to older versions of Go. If unset, this will default to the Go version specified in your go.mod.
+        # See https://staticcheck.io/docs/running-staticcheck/cli/#go
+        # for more information.
+
+        # min-go-version: # optional, default is module
+        # # Build tags
+        # build-tags: # optional
+        # # Value to pass to Staticcheck in the -checks flag. This doesn't normally need to be set.
+
+        # checks: # optional, default is inherit
+        # # Let the action install a version of Go appropriate for building and running Staticcheck.
+        # # If set to false, the action expects you to have installed Go already.
+        # # The latest release of Staticcheck works with the last two minor releases of Go.
+        # # The action itself requires at least Go 1.16.
+
+        install-go: false # default is true
+        # # String to include in the cache key, in addition to the default, which is runner.os. This is useful when using multiple Go versions.
+
+        # cache-key: # optional
+        # # Relative path to the working directory Staticcheck should be executed in. This is useful when dealing with multiple projects within one repository.
+
+        # working-directory: # optional, default is .
+        # # Output format to use. This corresponds to Staticcheck's -f flag. Usually you will want to use the default ("text"), as this format creates annotations on pull requests. When combining multiple runs with merge-files, you want to use the "binary" format on the individual runs to create the inputs to the merge run.
+
+        # output-format: # optional, default is text
+        # # File to write Staticcheck's output to. Defaults to stdout.
+
+        # output-file: # optional
+        # # A newline-separated list of files to pass to "staticcheck -merge".
+
+        # merge-files: # optional
