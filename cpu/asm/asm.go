@@ -3,7 +3,6 @@ package asm
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
@@ -18,49 +17,41 @@ func NewAssembler() *Assembler {
 	return &Assembler{}
 }
 
+func badInstr(i int, instr *Instruction, reason any) error {
+	return fmt.Errorf("bad instruction: line %d: %q: %v", i, instr, reason)
+}
+
+func illegalOperands(i int, instr *Instruction) error {
+	return badInstr(i, instr, "illegal operands")
+}
+
 // Assemble accepts a stream of instructions and assembles them into binary bytes.
 func (a *Assembler) Assemble(instrs ...*Instruction) ([]byte, error) {
-	var buffer bytes.Buffer
+	var buf bytes.Buffer
 
 	for i, instr := range instrs {
+		badInstr := func(reason any) error {
+			return badInstr(i, instr, reason)
+		}
+
 		if err := instr.err; err != nil {
-			return nil, fmt.Errorf("bad instruction: line %d: %v", i, err)
+			return nil, badInstr(err)
 		}
 		switch instr.Mnemonic {
 		case nop:
-			buffer.WriteByte(0x00)
+			buf.WriteByte(0x00)
 
 		case ld:
-			switch {
-			case instr.Bytes == 3 &&
-				len(instr.Operands) == 2 &&
-				is[Reg16](instr.Operands[0]) &&
-				is[Imm16](instr.Operands[1]):
-				switch instr.Operands[0].(Reg16) {
-				case BC:
-					buffer.WriteByte(0x01)
-
-				case DE:
-					buffer.WriteByte(0x11)
-
-				case HL:
-					buffer.WriteByte(0x21)
-
-				case SP:
-					buffer.WriteByte(0x31)
-
-				default:
-					return nil, fmt.Errorf("bad instruction: line %d: %q: unknown register-16", i, instr.String())
-
-				}
-				binary.Write(&buffer, binary.LittleEndian, instr.Operands[1].(Imm16))
+			if err := a.ld(i, instr, &buf); err != nil {
+				return nil, err
 			}
+
 		default:
-			return nil, fmt.Errorf("bad instruction: line %d: %q", i, instr.String())
+			return nil, badInstr("unknown mnemnonic")
 		}
 	}
 
-	return buffer.Bytes(), nil
+	return buf.Bytes(), nil
 }
 
 func Assemble(instrs ...*Instruction) ([]byte, error) {
@@ -208,6 +199,7 @@ type Delta int
 
 const (
 	Plus  Delta = -1
+	None  Delta = 0
 	Minus Delta = 1
 )
 

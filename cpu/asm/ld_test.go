@@ -2,13 +2,6 @@ package asm
 
 import "fmt"
 
-func ExampleNOP() {
-	instr := NOP()
-
-	fmt.Println(instr)
-	// Output: NOP
-}
-
 func ExampleLD() {
 	print := func(i *Instruction) {
 		fmt.Println(i, "| Bytes:", i.Bytes, "Cycles:", i.Cycles)
