@@ -1,8 +1,11 @@
 package asm
 
+import "errors"
+
 const (
-	nop = "NOP"
-	ld  = "LD"
+	unknown = "<unknown>"
+	nop     = "NOP"
+	ld      = "LD"
 )
 
 // NOP assembles a NOP instruction, that performs no effect, and takes 4 cycles.
@@ -64,7 +67,10 @@ func LD[OpL, OpR Operand](lh OpL, rh OpR) *Instruction {
 		cycles = 12
 
 	default:
-		panic("invalid construction of LD")
+		return &Instruction{
+			Mnemonic: ld,
+			err:      errors.New("invalid construction"),
+		}
 	}
 
 	return &Instruction{

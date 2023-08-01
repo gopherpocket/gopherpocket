@@ -13,6 +13,12 @@ type Instruction struct {
 	Bytes    int
 	Cycles   int
 	Operands []Operand
+	err      error
+}
+
+// Err returns the current error assosciated with the Instruction, if it exists.
+func (i *Instruction) Err() error {
+	return fmt.Errorf("%s: %v", i.Mnemonic, i.err)
 }
 
 // String implements fmt.Stringer
