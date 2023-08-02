@@ -23,7 +23,7 @@ func (m *Memory) WriteAt(p []byte, off int64) (n int, err error) {
 	if start < 0 || end > int64(len(m.buffer)) {
 		return 0, fmt.Errorf("range [%d:%d] out of bounds", start, end)
 	}
-	copy(m.buffer[off:off+int64(len(p))], p)
+	copy(m.buffer[start:end], p)
 	return len(p), nil
 }
 
@@ -50,7 +50,13 @@ func (m *Memory) WriteUint16At(v uint16, off int64) error {
 
 // ReadAt implements io.ReaderAt.
 func (m *Memory) ReadAt(p []byte, off int64) (n int, err error) {
-	panic("unimplemented")
+	start := off
+	end := off + int64(len(p))
+	if start < 0 || end > int64(len(m.buffer)) {
+		return 0, fmt.Errorf("range [%d:%d] out of bounds", start, end)
+	}
+	copy(p, m.buffer[start:end])
+	return len(p), nil
 }
 
 // ReadUint8At is a wrapper for reading a uint8 using [ReadAt]
