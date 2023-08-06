@@ -117,7 +117,7 @@ func SImm8(x int8) Imm8 {
 }
 
 // SImm16 is a helper that constructs an Imm16 from a signed 16 bit integer.
-// This is helpful since Go will not automatically convert Signed Int8 to Unsigned Int8 from constants.
+// This is helpful since Go will not automatically convert Signed Int16 to Unsigned Int16 from constants.
 func SImm16(x int16) Imm16 {
 	return signedImm[int16, Imm16](x)
 }
