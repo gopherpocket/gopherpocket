@@ -79,11 +79,11 @@ func (a *Assembler) ld(i int, instr *Instruction, buf *bytes.Buffer) error {
 		return illegalOperands(i, instr)
 	}
 
-	lh, rh := instr.Operands[0], instr.Operands[1]
-
 	if len(instr.Operands) != 2 {
 		return badInstr("unexpected number of operands")
 	}
+
+	lh, rh := instr.Operands[0], instr.Operands[1]
 
 	switch {
 	case instr.Bytes == 3 &&
@@ -104,9 +104,8 @@ func (a *Assembler) ld(i int, instr *Instruction, buf *bytes.Buffer) error {
 
 		default:
 			return illegalOperands()
-
 		}
-		binary.Write(buf, binary.LittleEndian, instr.Operands[1].(Imm16))
+		binary.Write(buf, binary.LittleEndian, rh.(Imm16))
 
 	case instr.Bytes == 1 &&
 		is[Pointer[Reg16]](lh) &&

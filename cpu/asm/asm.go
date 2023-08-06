@@ -34,9 +34,10 @@ func (a *Assembler) Assemble(instrs ...*Instruction) ([]byte, error) {
 			return badInstr(i, instr, reason)
 		}
 
-		if err := instr.err; err != nil {
+		if err := instr.Err(); err != nil {
 			return nil, badInstr(err)
 		}
+
 		switch instr.Mnemonic {
 		case nop:
 			buf.WriteByte(0x00)
@@ -70,7 +71,10 @@ type Instruction struct {
 
 // Err returns the current error assosciated with the Instruction, if it exists.
 func (i *Instruction) Err() error {
-	return fmt.Errorf("%s: %v", i.Mnemonic, i.err)
+	if i.err != nil {
+		return fmt.Errorf("%s: %v", i.Mnemonic, i.err)
+	}
+	return nil
 }
 
 // String implements fmt.Stringer
@@ -131,6 +135,7 @@ func signedImm[T int8 | int16, R Imm8 | Imm16](x T) R {
 // * Immediate8/16
 type Ref interface {
 	Register8 | Register16 | Immediate8 | Immediate16
+
 	Operand
 }
 
@@ -159,9 +164,9 @@ func (r Register16) String() string {
 		return "SP"
 
 	case r >= spMin && r <= spMax:
-		delta := int(r - SP)
-		if delta > 0 {
-			return "SP + " + strconv.Itoa(delta)
+		offset := int(r - SP)
+		if offset > 0 {
+			return "SP + " + strconv.Itoa(offset)
 		} else {
 			return "SP - " + strconv.Itoa(int(r-SP))
 		}
@@ -185,7 +190,7 @@ func (i Immediate16) String() string {
 	return fmt.Sprintf("$%X", uint16(i))
 }
 
-// Pointer reoresents a Pointer to a Reference Operand.
+// Pointer represents a Pointer to a Reference Operand.
 // In some operations, The gameoby CPU can increment or decrement Pointer value, which can be
 // represented by the Delta field.
 type Pointer[R Ref] struct {
@@ -198,19 +203,19 @@ type Pointer[R Ref] struct {
 type Delta int
 
 const (
-	Plus  Delta = -1
+	Plus  Delta = 1
 	None  Delta = 0
-	Minus Delta = 1
+	Minus Delta = -1
 )
 
 // String implements fmt.Stringer
 func (d Delta) String() string {
 	switch d {
 	case Minus:
-		return "+"
+		return "-"
 
 	case Plus:
-		return "-"
+		return "+"
 
 	default:
 		return ""
@@ -256,6 +261,7 @@ const (
 	BC
 	DE
 	HL
+	// below are 16 bit registers only
 	PC
 
 	// We use this special enumeration value to let us adding a signed 8 bit integer to SP as a right-hand opeand
