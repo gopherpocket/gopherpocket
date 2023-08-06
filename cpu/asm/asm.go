@@ -264,7 +264,7 @@ const (
 	// below are 16 bit registers only
 	PC
 
-	// We use this special enumeration value to let us adding a signed 8 bit integer to SP as a right-hand opeand
+	// We use this special enumeration value to let us add a signed 8 bit integer to SP as a right-hand operand
 	// This lets us express Instructions like LD HL, SP + 0x7F
 	spMin            = SP - 0x80
 	SP    Register16 = 0x85

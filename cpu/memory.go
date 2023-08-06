@@ -8,6 +8,7 @@ import (
 
 // Memory represents Gameboy Memory
 type Memory struct {
+	// Maximum memory cells a 16-bit bus can can address.
 	buffer [0x10000]byte
 }
 
@@ -32,6 +33,7 @@ func (m *Memory) WriteUint8At(v uint8, off int64) error {
 	buf := [1]byte{v}
 	n, err := m.WriteAt(buf[:], off)
 	if n != len(buf) {
+		// Only 1 byte should ever be written, panic if there are other values
 		panic("short/long write")
 	}
 	return err
@@ -43,6 +45,7 @@ func (m *Memory) WriteUint16At(v uint16, off int64) error {
 	binary.LittleEndian.PutUint16(buf[:], v)
 	n, err := m.WriteAt(buf[:], off)
 	if n != len(buf) {
+		// Only 2 bytes should ever be written, panic if there are other values
 		panic("short/long write")
 	}
 	return err
@@ -67,6 +70,7 @@ func (m *Memory) ReadUint8At(off int64) (uint8, error) {
 		return 0, err
 	}
 	if n != len(buf) {
+		// Only 1 byte should ever be read. Panic if it is unexpected not so, as that's a program bug.
 		panic("short/long read")
 	}
 	return buf[0], nil
@@ -80,6 +84,7 @@ func (m *Memory) ReadUint16At(off int64) (uint16, error) {
 		return 0, err
 	}
 	if n != len(buf) {
+		// Only 2 bytes should ever be read, panic otherwise.
 		panic("short/long read")
 	}
 	return binary.LittleEndian.Uint16(buf[:]), nil
