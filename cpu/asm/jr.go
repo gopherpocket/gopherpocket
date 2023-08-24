@@ -5,12 +5,7 @@ import (
 	"fmt"
 )
 
-type Addr interface {
-	Offset8 | Label
-	Operand
-}
-
-func JR[T Addr](e8 T) *Instruction {
+func JR[T RelAddr](e8 T) *Instruction {
 	return &Instruction{
 		Mnemonic: jr,
 		Bytes:    2,
@@ -21,7 +16,7 @@ func JR[T Addr](e8 T) *Instruction {
 	}
 }
 
-func JRZ[T Addr](e8 T) *Instruction {
+func JRZ[T RelAddr](e8 T) *Instruction {
 	return &Instruction{
 		Mnemonic:  jr,
 		Bytes:     2,
@@ -34,7 +29,7 @@ func JRZ[T Addr](e8 T) *Instruction {
 	}
 }
 
-func JRNZ[T Addr](e8 T) *Instruction {
+func JRNZ[T RelAddr](e8 T) *Instruction {
 	return &Instruction{
 		Mnemonic:  jr,
 		Bytes:     2,
@@ -47,7 +42,7 @@ func JRNZ[T Addr](e8 T) *Instruction {
 	}
 }
 
-func JRC[T Addr](e8 T) *Instruction {
+func JRC[T RelAddr](e8 T) *Instruction {
 	return &Instruction{
 		Mnemonic:  jr,
 		Bytes:     2,
@@ -60,7 +55,7 @@ func JRC[T Addr](e8 T) *Instruction {
 	}
 }
 
-func JRNC[T Addr](e8 T) *Instruction {
+func JRNC[T RelAddr](e8 T) *Instruction {
 	return &Instruction{
 		Mnemonic:  jr,
 		Bytes:     2,
@@ -113,12 +108,34 @@ func (a *Assembler) jr(i int, instr *Instruction, labels map[Label]int, buf *byt
 
 	if len(instr.Operands) == 2 {
 		lh, rh := instr.Operands[0], instr.Operands[1]
-		if !is[ConditionCode](lh) || !is[Offset8](rh) {
+		if !is[ConditionCode](lh) || !(is[Offset8](rh) || is[Label](rh)) {
 			return illegalOperands()
 		}
 
 		cc := lh.(ConditionCode)
-		off := rh.(Offset8)
+		var off Offset8
+
+		switch v := rh.(type) {
+		case Offset8:
+			off = v
+
+		case Label:
+			label := v
+			// lookup label
+			labelIdx, ok := labels[label]
+			if !ok {
+				return fmt.Errorf("unknown label %q", label)
+			}
+			curPos := buf.Len()
+			delta := labelIdx - (curPos + instr.Bytes)
+			if delta > 127 || delta < -128 {
+				return fmt.Errorf("label %q out of range (%d)", label, delta)
+			}
+			off = Offset8(delta)
+
+		default:
+			return illegalOperands()
+		}
 
 		switch cc {
 		case ZF:

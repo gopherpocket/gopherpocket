@@ -66,6 +66,11 @@ func (a *Assembler) Assemble(instrs ...*Instruction) ([]byte, error) {
 				return nil, err
 			}
 
+		case jp:
+			if err := a.jp(i, instr, labels, &buf); err != nil {
+				return nil, err
+			}
+
 		default:
 			return nil, badInstr("unknown mnemnonic")
 		}
@@ -167,6 +172,17 @@ type Ref interface {
 	Register8 | Register16 | Immediate8 | Immediate16
 
 	Operand
+}
+
+// RelAddr is a generic type constraint for any kind of control flow relative jump address, either 8 bit signed offset,
+// or a label.
+type RelAddr interface {
+	Offset8 | Label
+}
+
+// Addr is a generic type constraint for an absolute jump pointer. It is either an Imm16, or a label.
+type Addr interface {
+	Imm16 | Label
 }
 
 func (Register8) operand() {}
