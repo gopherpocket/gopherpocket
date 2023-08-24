@@ -29,6 +29,20 @@ func illegalOperands(i int, instr *Instruction) error {
 func (a *Assembler) Assemble(instrs ...*Instruction) ([]byte, error) {
 	var buf bytes.Buffer
 
+	labels := make(map[Label]int)
+
+	// do a single pass and find all labels
+	var acc int
+	for _, instr := range instrs {
+		if instr.Label != "" {
+			if _, ok := labels[instr.Label]; ok {
+				return nil, fmt.Errorf("duplicate label %q", instr.Label)
+			}
+			labels[instr.Label] = acc
+		}
+		acc += instr.Bytes
+	}
+
 	for i, instr := range instrs {
 		badInstr := func(reason any) error {
 			return badInstr(i, instr, reason)
@@ -47,6 +61,11 @@ func (a *Assembler) Assemble(instrs ...*Instruction) ([]byte, error) {
 				return nil, err
 			}
 
+		case jr:
+			if err := a.jr(i, instr, labels, &buf); err != nil {
+				return nil, err
+			}
+
 		default:
 			return nil, badInstr("unknown mnemnonic")
 		}
@@ -62,11 +81,13 @@ func Assemble(instrs ...*Instruction) ([]byte, error) {
 
 // Instruction is a in intermediate representation of a Gameboy CPU instruction.
 type Instruction struct {
-	Mnemonic string
-	Bytes    int
-	Cycles   int
-	Operands []Operand
-	err      error
+	Mnemonic  string
+	Bytes     int
+	Cycles    int
+	CyclesAlt int
+	Operands  []Operand
+	Label     Label
+	err       error
 }
 
 // Err returns the current error assosciated with the Instruction, if it exists.
@@ -100,14 +121,18 @@ type Operand interface {
 }
 
 type (
-	Register8   int
-	Reg8        = Register8
-	Register16  int
-	Reg16       = Register16
-	Immediate8  uint8
-	Imm8        = Immediate8
-	Immediate16 uint16
-	Imm16       = Immediate16
+	Register8     int
+	Reg8          = Register8
+	Register16    int
+	Reg16         = Register16
+	Immediate8    uint8
+	Imm8          = Immediate8
+	Immediate16   uint16
+	Imm16         = Immediate16
+	ConditionCode int
+	Offset8       int8
+	Offset16      int16
+	Label         string
 )
 
 // SImm8 is a helper that constructs an Imm8 from a signed 8 bit integer.
@@ -127,6 +152,11 @@ func signedImm[T int8 | int16, R Imm8 | Imm16](x T) R {
 		return (R(x) - 1) | 0x80
 	}
 	return R(x)
+}
+
+func AddLabel(s string, i *Instruction) *Instruction {
+	i.Label = Label(s)
+	return i
 }
 
 // Ref is a generic type constraint for the reference a Pointer Operand can hold.
@@ -188,6 +218,39 @@ func (Immediate16) operand() {}
 // String implements fmt.Stringer
 func (i Immediate16) String() string {
 	return fmt.Sprintf("$%X", uint16(i))
+}
+
+func (Offset8) operand() {}
+
+func (o Offset8) String() string {
+	return fmt.Sprintf("$%X", int8(o))
+}
+
+func (Label) operand() {}
+
+func (l Label) String() string {
+	return string(l)
+}
+
+func (ConditionCode) operand() {}
+
+func (cc ConditionCode) String() string {
+	switch cc {
+	case ZF:
+		return "Z"
+
+	case NZF:
+		return "NZ"
+
+	case CF:
+		return "C"
+
+	case NCF:
+		return "NC"
+
+	default:
+		return ""
+	}
 }
 
 // Pointer represents a Pointer to a Reference Operand.
@@ -269,6 +332,14 @@ const (
 	spMin            = SP - 0x80
 	SP    Register16 = 0x85
 	spMax            = SP + 0x7F
+)
+
+// Condition Codes
+const (
+	ZF ConditionCode = iota + 1
+	NZF
+	CF
+	NCF
 )
 
 var registerStrs = []string{"A", "F", "B", "C", "D", "E", "H", "L"}

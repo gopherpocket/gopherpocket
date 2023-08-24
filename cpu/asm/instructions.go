@@ -6,6 +6,7 @@ const (
 	unknown = "<unknown>"
 	nop     = "NOP"
 	ld      = "LD"
+	jr      = "JR"
 )
 
 // helper to check if an operand is of a specific concrete type

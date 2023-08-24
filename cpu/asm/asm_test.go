@@ -20,6 +20,9 @@ func TestAssembler(t *testing.T) {
 		LD(Ptr(HL), B),
 		LD(Ptr(C), A),
 		LD(Ptr(Imm16(0xFACE)), A),
+		AddLabel("foo",
+			NOP()),
+		JR(Label("foo")),
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{
@@ -35,5 +38,7 @@ func TestAssembler(t *testing.T) {
 		0x70,             // LD [HL], B
 		0xE2,             // LD [C], A
 		0xEA, 0xce, 0xfa, // LD [$FACE], A
+		0x00,                  // NOP
+		0x18, byte(SImm8(-2)), // JR -2
 	}, code)
 }
