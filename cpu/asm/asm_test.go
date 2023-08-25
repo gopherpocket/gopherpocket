@@ -8,7 +8,8 @@ import (
 
 func TestAssembler(t *testing.T) {
 	code, err := Assemble(
-		NOP(),
+		AddLabel("bar",
+			NOP()),
 		LD(BC, Imm16(0xabcd)),
 		LD(Ptr(BC), A),
 		LD(B, Imm8(0xFF)),
@@ -20,6 +21,11 @@ func TestAssembler(t *testing.T) {
 		LD(Ptr(HL), B),
 		LD(Ptr(C), A),
 		LD(Ptr(Imm16(0xFACE)), A),
+		AddLabel("foo",
+			NOP()),
+		JR(Label("foo")),
+		JRZ(Label("foo")),
+		JPZ(Label("bar")),
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{
@@ -35,5 +41,9 @@ func TestAssembler(t *testing.T) {
 		0x70,             // LD [HL], B
 		0xE2,             // LD [C], A
 		0xEA, 0xce, 0xfa, // LD [$FACE], A
+		0x00,                  // NOP
+		0x18, byte(SImm8(-2)), // JR -2
+		0x28, byte(SImm8(-4)), // JRZ -4
+		0xCA, 0x00, 0x00, /// JPZ 0x0
 	}, code)
 }
