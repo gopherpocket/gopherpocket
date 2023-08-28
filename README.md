@@ -2,3 +2,6 @@
 
 # gopherpocket
 A Gameboy (Color) Emulator written in pure Go
+
+## Resources
+Opcode table: https://gbdev.io/gb-opcodes/optables/
