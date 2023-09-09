@@ -7,6 +7,7 @@ const (
 	nop     = "NOP"
 	ld      = "LD"
 	inc     = "INC"
+	dec     = "DEC"
 )
 
 // helper to check if an operand is of a specific concrete type
