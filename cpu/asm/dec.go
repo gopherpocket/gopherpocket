@@ -2,6 +2,7 @@ package asm
 
 import "errors"
 
+// DEC assembles a [DEC instruction]: https://rgbds.gbdev.io/docs/v0.6.1/gbz80.7/#8-bit_Arithmetic_and_Logic_Instructions
 func DEC[Op Operand](op Op) *Instruction {
 	var bytes, cycles int
 	switch {
